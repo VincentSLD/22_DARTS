@@ -350,12 +350,12 @@
     font-family:'DM Mono',monospace;
     font-size:12px;
     background:rgba(0,0,0,.25);
-    border-radius:6px;padding:5px 0;
+    border-radius:7px;padding:6px 0;
     color:var(--cream-dim);
     border:1px solid transparent;
   }
-  .ctarget .label{font-size:11px;opacity:.7;display:block;margin-bottom:1px;}
-  .ctarget .marks{font-size:20px;color:var(--cream);line-height:1.1;}
+  .ctarget .label{font-size:13px;font-weight:500;opacity:.8;display:block;margin-bottom:2px;}
+  .ctarget .marks{font-size:24px;color:var(--cream);line-height:1.1;}
   .ctarget.closed{background:rgba(212,168,75,.15);border-color:var(--gold);}
   .ctarget.closed .marks{color:var(--gold);}
 
@@ -945,8 +945,8 @@ function renderGame(){
     let scoreDisplay = p.score;
     let scoreLabel = '';
     if(state.game==='cricket'){
-      scoreLabel = `<div class="pmeta">${p.score} PTS</div>`;
-      scoreDisplay = CRICKET_NUMS.filter(n=>p.cricket[n]>=3).length+'/7';
+      scoreDisplay = p.score;
+      scoreLabel = `<div class="pmeta">${CRICKET_NUMS.filter(n=>p.cricket[n]>=3).length}/7</div>`;
     } else if(state.game==='clock'){
       scoreDisplay = (p.target>20?'✓':p.target-1)+'/20';
     } else if(state.game==='highscore'){
