@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1f17">
+<title>Bullseye — Compteur de Fléchettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,400;0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --felt:#0d1f17;
+    --felt-2:#142b20;
+    --felt-3:#1c3a2c;
+    --wood:#3a2418;
+    --wood-2:#5a3825;
+    --cream:#f4ead5;
+    --cream-dim:#c9bfa8;
+    --red:#c4302b;
+    --red-deep:#8b1e1a;
+    --gold:#d4a84b;
+    --gold-light:#e8c876;
+    --black:#1a1a1a;
+    --white:#fafafa;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+    --inset:inset 0 2px 0 rgba(255,255,255,.06), inset 0 -2px 0 rgba(0,0,0,.4);
+  }
+  html,body{
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  body{
+    font-family:'Fraunces',Georgia,serif;
+    color:var(--cream);
+    background:
+      radial-gradient(ellipse at top, var(--felt-3) 0%, var(--felt) 60%, #050a07 100%),
+      var(--felt);
+    background-attachment:fixed;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+    position:fixed;
+    inset:0;
+  }
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(212,168,75,.04) 0%, transparent 40%);
+    pointer-events:none;
+    z-index:0;
+  }
+  body::after{
+    content:'';
+    position:fixed;inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.4;
+    pointer-events:none;
+    z-index:1;
+    mix-blend-mode:overlay;
+  }
+  #app{
+    position:relative;
+    z-index:2;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen{
+    display:none;
+    flex:1;
+    flex-direction:column;
+    height:100%;
+    overflow:hidden;
+    animation:fade .35s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ===== HEADER ===== */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 10px;
+    border-bottom:1px solid rgba(212,168,75,.15);
+    background:linear-gradient(180deg,rgba(0,0,0,.3),transparent);
+  }
+  .brand{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px;letter-spacing:.18em;
+    color:var(--gold);
+    display:flex;align-items:center;gap:10px;
+  }
+  .brand .dot{
+    width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#ff6b66,var(--red) 60%,var(--red-deep));
+    box-shadow:0 0 0 2px var(--cream),0 0 0 4px var(--black),0 0 12px rgba(196,48,43,.6);
+  }
+  .icon-btn{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(212,168,75,.2);
+    color:var(--cream);
+    width:42px;height:42px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;cursor:pointer;
+    transition:transform .15s, background .15s;
+  }
+  .icon-btn:active{transform:scale(.92);background:rgba(212,168,75,.18);}
+
+  /* ===== HOME ===== */
+  .home-scroll{flex:1;overflow-y:auto;padding:20px 18px 40px;-webkit-overflow-scrolling:touch;}
+  .hero{
+    text-align:center;padding:18px 0 26px;
+  }
+  .hero h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(48px,12vw,76px);
+    letter-spacing:.04em;
+    line-height:.95;
+    color:var(--cream);
+    text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 30px rgba(212,168,75,.15);
+  }
+  .hero h1 .accent{color:var(--red);font-style:italic;font-family:'Fraunces',serif;font-weight:900;}
+  .hero p{
+    margin-top:8px;color:var(--cream-dim);
+    font-size:14px;letter-spacing:.05em;font-style:italic;
+  }
+  .section-label{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:13px;letter-spacing:.3em;
+    color:var(--gold);
+    margin:12px 0 14px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .section-label::before,.section-label::after{
+    content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,75,.3),transparent);
+  }
+  .game-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .game-card{
+    position:relative;
+    background:linear-gradient(160deg,var(--felt-2),var(--felt));
+    border:1px solid rgba(212,168,75,.18);
+    border-radius:18px;
+    padding:18px 14px 16px;
+    text-align:left;
+    color:var(--cream);
+    cursor:pointer;
+    overflow:hidden;
+    box-shadow:var(--shadow),var(--inset);
+    transition:transform .15s;
+    min-height:140px;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .game-card:active{transform:scale(.97);}
+  .game-card .badge{
+    position:absolute;top:12px;right:12px;
+    font-family:'DM Mono',monospace;
+    font-size:10px;letter-spacing:.15em;
+    color:var(--gold);
+    border:1px solid rgba(212,168,75,.3);
+    padding:3px 7px;border-radius:6px;
+    background:rgba(0,0,0,.25);
+  }
+  .game-card h3{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:30px;letter-spacing:.05em;
+    color:var(--cream);
+    margin-bottom:4px;
+  }
+  .game-card p{
+    font-size:12px;color:var(--cream-dim);
+    line-height:1.4;font-style:italic;
+  }
+  .game-card.popular{
+    background:linear-gradient(160deg,#1f3a2c,var(--felt-2));
+    border-color:rgba(212,168,75,.35);
+  }
+  .game-card.popular::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 100% 0%,rgba(212,168,75,.12),transparent 50%);
+    pointer-events:none;
+  }
+
+  /* ===== SETUP ===== */
+  .setup-scroll{flex:1;overflow-y:auto;padding:20px 18px 120px;-webkit-overflow-scrolling:touch;}
+  .setup-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:36px;letter-spacing:.05em;
+    color:var(--cream);margin-bottom:4px;
+  }
+  .setup-sub{
+    color:var(--cream-dim);font-size:13px;font-style:italic;margin-bottom:24px;
+  }
+  .field{margin-bottom:22px;}
+  .field-label{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:13px;letter-spacing:.25em;
+    color:var(--gold);margin-bottom:10px;
+  }
+  .seg{
+    display:flex;gap:8px;background:rgba(0,0,0,.3);
+    padding:6px;border-radius:14px;
+    border:1px solid rgba(212,168,75,.12);
+  }
+  .seg button{
+    flex:1;padding:14px 8px;border:none;background:transparent;
+    color:var(--cream-dim);
+    font-family:'Bebas Neue',sans-serif;
+    font-size:18px;letter-spacing:.1em;
+    border-radius:10px;cursor:pointer;
+    transition:all .2s;
+  }
+  .seg button.on{
+    background:linear-gradient(180deg,var(--red),var(--red-deep));
+    color:var(--cream);
+    box-shadow:var(--inset),0 4px 12px rgba(196,48,43,.3);
+  }
+  .players-list{display:flex;flex-direction:column;gap:10px;}
+  .player-row{
+    display:flex;align-items:center;gap:12px;
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(212,168,75,.15);
+    border-radius:14px;
+    padding:10px 12px 10px 16px;
+  }
+  .player-num{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px;color:var(--gold);
+    width:28px;text-align:center;
+  }
+  .player-row input{
+    flex:1;background:transparent;border:none;outline:none;
+    color:var(--cream);font-family:'Fraunces',serif;
+    font-size:18px;padding:12px 4px;
+  }
+  .player-row input::placeholder{color:rgba(244,234,213,.3);font-style:italic;}
+  .swatch{
+    width:28px;height:28px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.2);
+    cursor:pointer;flex-shrink:0;
+  }
+  .start-bar{
+    position:absolute;bottom:0;left:0;right:0;
+    padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.6) 30%);
+  }
+  .btn-primary{
+    width:100%;
+    padding:18px;
+    background:linear-gradient(180deg,var(--red),var(--red-deep));
+    color:var(--cream);
+    border:none;border-radius:16px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:24px;letter-spacing:.2em;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(196,48,43,.35),var(--inset);
+    transition:transform .1s;
+  }
+  .btn-primary:active{transform:scale(.98);}
+  .btn-secondary{
+    width:100%;padding:14px;
+    background:transparent;color:var(--cream-dim);
+    border:1px solid rgba(212,168,75,.25);
+    border-radius:14px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:16px;letter-spacing:.15em;
+    cursor:pointer;margin-top:10px;
+  }
+
+  /* ===== GAME ===== */
+  .game-screen{display:none;flex-direction:column;height:100%;}
+  .game-screen.active{display:flex;}
+  .game-top{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;
+    background:linear-gradient(180deg,rgba(0,0,0,.4),transparent);
+    border-bottom:1px solid rgba(212,168,75,.15);
+  }
+  .game-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:18px;letter-spacing:.18em;color:var(--gold);
+  }
+  .players-bar{
+    display:grid;gap:6px;padding:10px 12px;
+  }
+  .pcard{
+    background:linear-gradient(160deg,var(--felt-2),var(--felt));
+    border:1px solid rgba(212,168,75,.15);
+    border-radius:14px;
+    padding:10px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:relative;
+    overflow:hidden;
+    transition:all .25s;
+  }
+  .pcard.active{
+    border-color:var(--gold);
+    background:linear-gradient(160deg,#243f30,var(--felt-2));
+    box-shadow:0 0 0 1px var(--gold),0 6px 20px rgba(212,168,75,.18);
+  }
+  .pcard.active::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+  }
+  .pcard.bust{
+    animation:shake .4s;
+    border-color:var(--red);
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+  .pcard-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+  .pcolor{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.15);}
+  .pname{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:18px;letter-spacing:.08em;
+    color:var(--cream);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .pscore{
+    font-family:'DM Mono',monospace;
+    font-size:28px;font-weight:500;
+    color:var(--cream);
+    letter-spacing:-.02em;
+  }
+  .pcard.active .pscore{color:var(--gold-light);}
+  .pmeta{
+    font-family:'DM Mono',monospace;
+    font-size:10px;color:var(--cream-dim);
+    letter-spacing:.1em;margin-top:2px;
+  }
+
+  /* Cricket targets */
+  .cricket-targets{
+    display:flex;gap:3px;margin-top:6px;
+  }
+  .ctarget{
+    flex:1;text-align:center;
+    font-family:'DM Mono',monospace;
+    font-size:10px;
+    background:rgba(0,0,0,.25);
+    border-radius:5px;padding:3px 0;
+    color:var(--cream-dim);
+    border:1px solid transparent;
+  }
+  .ctarget .label{font-size:9px;opacity:.6;display:block;}
+  .ctarget .marks{font-size:14px;color:var(--cream);}
+  .ctarget.closed{background:rgba(212,168,75,.15);border-color:var(--gold);}
+  .ctarget.closed .marks{color:var(--gold);}
+
+  /* Around the clock */
+  .clock-target{
+    font-family:'DM Mono',monospace;
+    font-size:11px;color:var(--cream-dim);
+    margin-top:3px;letter-spacing:.05em;
+  }
+  .clock-target b{color:var(--gold);font-size:14px;}
+
+  /* ===== INPUT AREA ===== */
+  .input-area{
+    background:linear-gradient(180deg,var(--felt-2),#0a1812);
+    border-top:2px solid rgba(212,168,75,.2);
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .turn-display{
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(0,0,0,.4);
+    border-radius:12px;
+    padding:8px 14px;
+    border:1px solid rgba(212,168,75,.15);
+  }
+  .turn-darts{display:flex;gap:8px;}
+  .dart-slot{
+    min-width:54px;height:38px;
+    background:rgba(0,0,0,.5);
+    border:1px solid rgba(212,168,75,.2);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'DM Mono',monospace;
+    font-size:14px;color:var(--cream);
+  }
+  .dart-slot.empty{color:rgba(244,234,213,.25);}
+  .dart-slot.filled{background:linear-gradient(180deg,#243f30,var(--felt-3));border-color:var(--gold);}
+  .turn-total{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:26px;color:var(--gold-light);
+    letter-spacing:.05em;
+  }
+  .turn-total small{font-size:11px;color:var(--cream-dim);letter-spacing:.2em;display:block;line-height:1;}
+
+  .multiplier-row{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;
+  }
+  .mult-btn{
+    padding:12px 0;
+    background:rgba(0,0,0,.35);
+    border:1px solid rgba(212,168,75,.2);
+    color:var(--cream-dim);
+    font-family:'Bebas Neue',sans-serif;
+    font-size:16px;letter-spacing:.15em;
+    border-radius:10px;cursor:pointer;
+    transition:all .15s;
+  }
+  .mult-btn.on{
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+    color:var(--black);border-color:var(--gold);
+    box-shadow:0 4px 10px rgba(212,168,75,.3);
+  }
+
+  .keypad{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+  }
+  .key{
+    padding:14px 0;
+    background:linear-gradient(180deg,#1c3a2c,#142b20);
+    border:1px solid rgba(212,168,75,.15);
+    color:var(--cream);
+    font-family:'DM Mono',monospace;
+    font-size:18px;font-weight:500;
+    border-radius:10px;cursor:pointer;
+    transition:transform .08s, background .15s;
+    box-shadow:var(--inset);
+  }
+  .key:active{transform:scale(.93);background:linear-gradient(180deg,#2a4d3a,#1c3a2c);}
+  .key.special{
+    background:linear-gradient(180deg,var(--wood-2),var(--wood));
+    color:var(--gold-light);
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.1em;font-size:14px;
+  }
+  .key.bull{
+    background:radial-gradient(circle at 30% 30%,#ff6b66,var(--red) 60%,var(--red-deep));
+    color:var(--cream);
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.05em;font-size:13px;
+  }
+  .key.miss{
+    background:linear-gradient(180deg,#2a2a2a,#1a1a1a);
+    color:var(--cream-dim);
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.1em;font-size:13px;
+  }
+  .key.action{
+    background:linear-gradient(180deg,var(--red),var(--red-deep));
+    color:var(--cream);
+    font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.15em;font-size:14px;
+  }
+  .key.undo{
+    background:rgba(0,0,0,.4);
+    border:1px solid rgba(212,168,75,.25);
+    color:var(--gold);
+    font-size:18px;
+  }
+
+  /* ===== MODAL ===== */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.75);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    display:none;align-items:center;justify-content:center;
+    z-index:100;padding:24px;
+    animation:fade .25s ease;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:linear-gradient(160deg,var(--felt-2),var(--felt));
+    border:1px solid rgba(212,168,75,.3);
+    border-radius:20px;
+    padding:28px 24px;
+    max-width:400px;width:100%;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal h2{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:32px;letter-spacing:.1em;
+    color:var(--gold);margin-bottom:8px;
+  }
+  .modal .winner{
+    font-family:'Fraunces',serif;
+    font-size:28px;font-weight:900;font-style:italic;
+    color:var(--cream);margin:14px 0;
+  }
+  .modal p{
+    color:var(--cream-dim);font-size:14px;
+    margin-bottom:20px;line-height:1.5;
+  }
+  .modal-actions{display:flex;flex-direction:column;gap:10px;}
+
+  /* ===== Tablet adjustments ===== */
+  @media (min-width: 700px){
+    .home-scroll,.setup-scroll{padding-left:40px;padding-right:40px;max-width:700px;margin:0 auto;width:100%;}
+    .game-grid{grid-template-columns:1fr 1fr;gap:16px;}
+    .key{padding:18px 0;font-size:22px;}
+    .pcard{padding:14px 18px;}
+    .pname{font-size:22px;}
+    .pscore{font-size:36px;}
+    .input-area{padding:14px 14px calc(14px + env(safe-area-inset-bottom));}
+    .keypad{max-width:600px;margin:0 auto;width:100%;}
+    .multiplier-row{max-width:600px;margin:0 auto;width:100%;}
+    .turn-display{max-width:600px;margin:0 auto;width:100%;}
+    .players-bar{max-width:700px;margin:0 auto;width:100%;}
+  }
+  @media (min-width: 900px) and (orientation: landscape){
+    .game-screen{flex-direction:row;}
+    .left-col{flex:1;display:flex;flex-direction:column;border-right:1px solid rgba(212,168,75,.15);}
+    .left-col .players-bar{flex:1;overflow-y:auto;}
+    .right-col{flex:1;display:flex;flex-direction:column;}
+    .input-area{flex:1;border-top:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============ HOME ============ -->
+<section class="screen active" id="screen-home">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>BULLSEYE</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cream-dim);letter-spacing:.15em;">v1.0</div>
+  </div>
+  <div class="home-scroll">
+    <div class="hero">
+      <h1>Compteur<br><span class="accent">de fléchettes</span></h1>
+      <p>— Gentlemen, take your aim —</p>
+    </div>
+    <div class="section-label">Choisir un jeu</div>
+    <div class="game-grid">
+      <button class="game-card popular" data-game="501">
+        <div class="badge">POPULAIRE</div>
+        <h3>501</h3>
+        <p>Le grand classique. Descendre à zéro pile, finir sur un double.</p>
+      </button>
+      <button class="game-card popular" data-game="301">
+        <div class="badge">CLASSIQUE</div>
+        <h3>301</h3>
+        <p>Plus rapide que le 501. Double-out obligatoire pour terminer.</p>
+      </button>
+      <button class="game-card" data-game="cricket">
+        <div class="badge">TACTIQUE</div>
+        <h3>Cricket</h3>
+        <p>Fermer 20 → 15 et le bull. Stratégie et défense au programme.</p>
+      </button>
+      <button class="game-card" data-game="clock">
+        <div class="badge">PRÉCISION</div>
+        <h3>Around the<br>Clock</h3>
+        <p>Toucher chaque numéro de 1 à 20, dans l'ordre, le plus vite possible.</p>
+      </button>
+      <button class="game-card" data-game="highscore">
+        <div class="badge">FUN</div>
+        <h3>High<br>Score</h3>
+        <p>Le plus gros score en un nombre de manches défini. Simple, brutal.</p>
+      </button>
+      <button class="game-card" data-game="killer">
+        <div class="badge">DUEL</div>
+        <h3>Killer</h3>
+        <p>Devenir tueur, puis éliminer les autres en touchant leur numéro.</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SETUP ============ -->
+<section class="screen" id="screen-setup">
+  <div class="topbar">
+    <button class="icon-btn" onclick="goHome()">←</button>
+    <div class="brand"><span class="dot"></span><span id="setup-game-name">501</span></div>
+    <div style="width:42px;"></div>
+  </div>
+  <div class="setup-scroll">
+    <div class="setup-title">Préparer la partie</div>
+    <div class="setup-sub">Choisissez les options et les joueurs</div>
+
+    <div class="field" id="field-startscore" style="display:none;">
+      <div class="field-label">Score de départ</div>
+      <div class="seg" data-key="startScore">
+        <button data-val="301">301</button>
+        <button data-val="501" class="on">501</button>
+        <button data-val="701">701</button>
+      </div>
+    </div>
+
+    <div class="field" id="field-double" style="display:none;">
+      <div class="field-label">Finition</div>
+      <div class="seg" data-key="doubleOut">
+        <button data-val="0">Libre</button>
+        <button data-val="1" class="on">Double Out</button>
+      </div>
+    </div>
+
+    <div class="field" id="field-cricket" style="display:none;">
+      <div class="field-label">Mode Cricket</div>
+      <div class="seg" data-key="cricketMode">
+        <button data-val="points" class="on">Avec points</button>
+        <button data-val="nopoints">Sans points</button>
+      </div>
+    </div>
+
+    <div class="field" id="field-rounds" style="display:none;">
+      <div class="field-label">Nombre de manches</div>
+      <div class="seg" data-key="rounds">
+        <button data-val="5">5</button>
+        <button data-val="10" class="on">10</button>
+        <button data-val="15">15</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Nombre de joueurs</div>
+      <div class="seg" data-key="numPlayers">
+        <button data-val="1">1</button>
+        <button data-val="2" class="on">2</button>
+        <button data-val="3">3</button>
+        <button data-val="4">4</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">Joueurs</div>
+      <div class="players-list" id="players-list"></div>
+    </div>
+  </div>
+  <div class="start-bar">
+    <button class="btn-primary" onclick="startGame()">Lancer la partie</button>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section class="screen" id="screen-game">
+  <div class="topbar">
+    <button class="icon-btn" onclick="confirmExit()">←</button>
+    <div class="game-title" id="game-title">501</div>
+    <button class="icon-btn" onclick="confirmReset()">↻</button>
+  </div>
+
+  <div class="left-col" style="display:contents;">
+    <div class="players-bar" id="players-bar"></div>
+  </div>
+
+  <div class="right-col" style="display:contents;">
+    <div class="input-area">
+      <div class="turn-display">
+        <div class="turn-darts" id="turn-darts">
+          <div class="dart-slot empty">—</div>
+          <div class="dart-slot empty">—</div>
+          <div class="dart-slot empty">—</div>
+        </div>
+        <div class="turn-total" id="turn-total">
+          <small>VOLÉE</small>
+          0
+        </div>
+      </div>
+
+      <div class="multiplier-row">
+        <button class="mult-btn on" data-mult="1">SIMPLE</button>
+        <button class="mult-btn" data-mult="2">DOUBLE</button>
+        <button class="mult-btn" data-mult="3">TRIPLE</button>
+      </div>
+
+      <div class="keypad">
+        <button class="key" data-num="1">1</button>
+        <button class="key" data-num="2">2</button>
+        <button class="key" data-num="3">3</button>
+        <button class="key" data-num="4">4</button>
+        <button class="key" data-num="5">5</button>
+        <button class="key" data-num="6">6</button>
+        <button class="key" data-num="7">7</button>
+        <button class="key" data-num="8">8</button>
+        <button class="key" data-num="9">9</button>
+        <button class="key" data-num="10">10</button>
+        <button class="key" data-num="11">11</button>
+        <button class="key" data-num="12">12</button>
+        <button class="key" data-num="13">13</button>
+        <button class="key" data-num="14">14</button>
+        <button class="key" data-num="15">15</button>
+        <button class="key" data-num="16">16</button>
+        <button class="key" data-num="17">17</button>
+        <button class="key" data-num="18">18</button>
+        <button class="key" data-num="19">19</button>
+        <button class="key" data-num="20">20</button>
+        <button class="key bull" data-num="25">25</button>
+        <button class="key bull" data-num="50">BULL</button>
+        <button class="key miss" data-num="0">RATÉ</button>
+        <button class="key undo" onclick="undoLast()">↶</button>
+        <button class="key action" onclick="endTurn()">VALIDER</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modal-title">🎯 Partie terminée</h2>
+    <div class="winner" id="modal-winner">—</div>
+    <p id="modal-text">—</p>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="rematch()">Revanche</button>
+      <button class="btn-secondary" onclick="goHome();closeModal();">Menu principal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==================== STATE ==================== */
+const COLORS = ['#c4302b','#d4a84b','#4a90c4','#7fb069'];
+const DEFAULT_NAMES = ['Joueur 1','Joueur 2','Joueur 3','Joueur 4'];
+
+const state = {
+  game: null,            // '501','301','cricket','clock','highscore','killer'
+  options: {
+    numPlayers: 2,
+    startScore: 501,
+    doubleOut: 1,
+    cricketMode: 'points',
+    rounds: 10
+  },
+  players: [],           // [{name, color, score, ...}]
+  currentIdx: 0,
+  currentDarts: [],      // [{num,mult,value,label}]
+  preMult: 1,
+  round: 1,
+  turnSnapshots: [],     // for undo of full turns
+  finished: false
+};
+
+const CRICKET_NUMS = [20,19,18,17,16,15,25];
+
+/* ==================== NAVIGATION ==================== */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){ show('screen-home'); state.finished=false; }
+
+/* ==================== HOME ==================== */
+document.querySelectorAll('.game-card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    state.game = card.dataset.game;
+    openSetup();
+  });
+});
+
+/* ==================== SETUP ==================== */
+function openSetup(){
+  const names = {
+    '501':'501','301':'301','cricket':'CRICKET','clock':'AROUND THE CLOCK',
+    'highscore':'HIGH SCORE','killer':'KILLER'
+  };
+  document.getElementById('setup-game-name').textContent = names[state.game];
+
+  // Show/hide option fields per game
+  document.getElementById('field-startscore').style.display = (state.game==='501'||state.game==='301') ? '' : 'none';
+  document.getElementById('field-double').style.display    = (state.game==='501'||state.game==='301') ? '' : 'none';
+  document.getElementById('field-cricket').style.display   = (state.game==='cricket') ? '' : 'none';
+  document.getElementById('field-rounds').style.display    = (state.game==='highscore') ? '' : 'none';
+
+  // Pre-set startScore segment based on game
+  if(state.game==='501'){
+    setSeg('startScore','501');
+    state.options.startScore=501;
+  } else if(state.game==='301'){
+    setSeg('startScore','301');
+    state.options.startScore=301;
+  }
+
+  renderPlayersList();
+  show('screen-setup');
+}
+
+// Segmented controls
+document.querySelectorAll('.seg').forEach(seg=>{
+  seg.addEventListener('click',e=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    const key = seg.dataset.key;
+    let val = btn.dataset.val;
+    if(!isNaN(val)) val = parseInt(val);
+    state.options[key] = val;
+    if(key==='numPlayers') renderPlayersList();
+  });
+});
+
+function setSeg(key,val){
+  const seg = document.querySelector(`.seg[data-key="${key}"]`);
+  if(!seg) return;
+  seg.querySelectorAll('button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.val == val);
+  });
+}
+
+function renderPlayersList(){
+  const n = state.options.numPlayers;
+  const list = document.getElementById('players-list');
+  // Preserve already typed names
+  const existing = Array.from(list.querySelectorAll('input')).map(i=>i.value);
+  list.innerHTML='';
+  for(let i=0;i<n;i++){
+    const row = document.createElement('div');
+    row.className='player-row';
+    row.innerHTML = `
+      <div class="player-num">${i+1}</div>
+      <input type="text" placeholder="${DEFAULT_NAMES[i]}" value="${existing[i]||''}" maxlength="14">
+      <div class="swatch" style="background:${COLORS[i]}"></div>
+    `;
+    list.appendChild(row);
+  }
+}
+
+/* ==================== GAME START ==================== */
+function startGame(){
+  const inputs = document.querySelectorAll('#players-list input');
+  state.players = [];
+  inputs.forEach((inp,i)=>{
+    const name = inp.value.trim() || DEFAULT_NAMES[i];
+    const p = {
+      name, color: COLORS[i],
+      score: 0,
+      dartsThrown: 0,
+      turnsPlayed: 0,
+      totalScored: 0,
+      finished: false
+    };
+    if(state.game==='501'||state.game==='301'){
+      p.score = state.options.startScore;
+    } else if(state.game==='cricket'){
+      p.cricket = {20:0,19:0,18:0,17:0,16:0,15:0,25:0};
+      p.score = 0;
+    } else if(state.game==='clock'){
+      p.target = 1;
+      p.score = 0; // not used as such
+    } else if(state.game==='highscore'){
+      p.score = 0;
+    } else if(state.game==='killer'){
+      p.killerNum = null;     // assigned via first scoring number
+      p.lives = 3;
+      p.isKiller = false;
+    }
+    state.players.push(p);
+  });
+  state.currentIdx = 0;
+  state.currentDarts = [];
+  state.preMult = 1;
+  state.round = 1;
+  state.turnSnapshots = [];
+  state.finished = false;
+
+  document.getElementById('game-title').textContent = ({
+    '501':'501','301':'301','cricket':'CRICKET','clock':'AROUND THE CLOCK',
+    'highscore':'HIGH SCORE — '+state.options.rounds+' MANCHES','killer':'KILLER'
+  })[state.game];
+
+  renderGame();
+  show('screen-game');
+}
+
+/* ==================== RENDER GAME ==================== */
+function renderGame(){
+  const bar = document.getElementById('players-bar');
+  bar.innerHTML='';
+  state.players.forEach((p,i)=>{
+    const card = document.createElement('div');
+    card.className = 'pcard'+(i===state.currentIdx && !state.finished?' active':'');
+    card.dataset.idx = i;
+
+    let extra='';
+    if(state.game==='cricket'){
+      const tgs = CRICKET_NUMS.map(n=>{
+        const m = p.cricket[n];
+        const closed = m>=3;
+        const marks = m===0?'·':m===1?'/':m===2?'X':'⊗';
+        const label = n===25?'B':n;
+        return `<div class="ctarget ${closed?'closed':''}"><span class="label">${label}</span><span class="marks">${marks}</span></div>`;
+      }).join('');
+      extra = `<div class="cricket-targets">${tgs}</div>`;
+    } else if(state.game==='clock'){
+      const t = p.target>20?'🏆':p.target;
+      extra = `<div class="clock-target">Cible : <b>${t}</b></div>`;
+    } else if(state.game==='killer'){
+      const k = p.killerNum?`N°${p.killerNum}`:'à définir';
+      extra = `<div class="clock-target">${k} — Vies : <b>${'❤'.repeat(Math.max(0,p.lives))||'☠'}</b>${p.isKiller?' 🗡️':''}</div>`;
+    }
+
+    let scoreDisplay = p.score;
+    let scoreLabel = '';
+    if(state.game==='cricket'){
+      scoreLabel = `<div class="pmeta">${p.score} PTS</div>`;
+      scoreDisplay = CRICKET_NUMS.filter(n=>p.cricket[n]>=3).length+'/7';
+    } else if(state.game==='clock'){
+      scoreDisplay = (p.target>20?'✓':p.target-1)+'/20';
+    } else if(state.game==='highscore'){
+      scoreLabel = `<div class="pmeta">M ${Math.min(state.round,state.options.rounds)}/${state.options.rounds}</div>`;
+    } else if(state.game==='killer'){
+      scoreDisplay = p.lives>0?'EN JEU':'ÉLIMINÉ';
+    } else {
+      // 501/301
+      const avg = p.turnsPlayed>0?(p.totalScored/p.turnsPlayed).toFixed(1):'—';
+      scoreLabel = `<div class="pmeta">MOY ${avg}</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="pcard-left">
+        <div class="pcolor" style="background:${p.color}"></div>
+        <div style="min-width:0;">
+          <div class="pname">${p.name}${p.finished?' 🏆':''}</div>
+          ${extra}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="pscore">${scoreDisplay}</div>
+        ${scoreLabel}
+      </div>
+    `;
+    bar.appendChild(card);
+  });
+
+  renderTurn();
+}
+
+function renderTurn(){
+  const slots = document.querySelectorAll('#turn-darts .dart-slot');
+  slots.forEach((slot,i)=>{
+    if(state.currentDarts[i]){
+      slot.textContent = state.currentDarts[i].label;
+      slot.className = 'dart-slot filled';
+    } else {
+      slot.textContent='—';
+      slot.className='dart-slot empty';
+    }
+  });
+  const total = state.currentDarts.reduce((s,d)=>s+d.value,0);
+  document.getElementById('turn-total').innerHTML = `<small>VOLÉE</small>${total}`;
+
+  document.querySelectorAll('.mult-btn').forEach(b=>{
+    b.classList.toggle('on', parseInt(b.dataset.mult)===state.preMult);
+  });
+}
+
+/* ==================== INPUT ==================== */
+document.querySelectorAll('.mult-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    state.preMult = parseInt(b.dataset.mult);
+    renderTurn();
+  });
+});
+
+document.querySelectorAll('.key[data-num]').forEach(k=>{
+  k.addEventListener('click',()=>{
+    if(state.finished) return;
+    if(state.currentDarts.length>=3) return;
+    const num = parseInt(k.dataset.num);
+    let mult = state.preMult;
+    let value, label;
+
+    // Bulls don't accept multipliers (25 single bull, 50 = double bull effectively)
+    if(num===0){ value=0; label='0'; }
+    else if(num===50){ value=50; label='BULL'; mult=2; }
+    else if(num===25){ value=25; label='25'; mult=1; }
+    else {
+      value = num*mult;
+      label = (mult===2?'D':mult===3?'T':'')+num;
+    }
+
+    state.currentDarts.push({num, mult, value, label});
+    state.preMult = 1;
+    renderTurn();
+    // Vibration tactile (si supporté)
+    if(navigator.vibrate) navigator.vibrate(15);
+  });
+});
+
+function undoLast(){
+  if(state.currentDarts.length>0){
+    state.currentDarts.pop();
+    state.preMult = 1;
+    renderTurn();
+  } else if(state.turnSnapshots.length>0){
+    // Restore previous turn
+    const snap = state.turnSnapshots.pop();
+    state.players = snap.players;
+    state.currentIdx = snap.currentIdx;
+    state.round = snap.round;
+    state.currentDarts = [];
+    state.preMult = 1;
+    state.finished = false;
+    renderGame();
+  }
+}
+
+/* ==================== END TURN LOGIC ==================== */
+function endTurn(){
+  if(state.finished) return;
+  if(state.currentDarts.length===0) return; // need at least 1 dart entered (or marked as miss)
+
+  // Snapshot for undo
+  state.turnSnapshots.push({
+    players: JSON.parse(JSON.stringify(state.players)),
+    currentIdx: state.currentIdx,
+    round: state.round
+  });
+
+  const p = state.players[state.currentIdx];
+  const darts = state.currentDarts;
+
+  if(state.game==='501'||state.game==='301'){
+    handle01Turn(p, darts);
+  } else if(state.game==='cricket'){
+    handleCricketTurn(p, darts);
+  } else if(state.game==='clock'){
+    handleClockTurn(p, darts);
+  } else if(state.game==='highscore'){
+    handleHighscoreTurn(p, darts);
+  } else if(state.game==='killer'){
+    handleKillerTurn(p, darts);
+  }
+
+  // Reset turn
+  state.currentDarts = [];
+  state.preMult = 1;
+
+  if(state.finished){
+    renderGame();
+    return;
+  }
+
+  // Next player
+  advanceTurn();
+  renderGame();
+}
+
+function advanceTurn(){
+  const start = state.currentIdx;
+  let next = (state.currentIdx+1) % state.players.length;
+  // skip finished/eliminated players
+  while(next!==start && (state.players[next].finished || (state.game==='killer' && state.players[next].lives<=0))){
+    next = (next+1) % state.players.length;
+  }
+  if(next <= state.currentIdx) state.round++;
+  state.currentIdx = next;
+
+  // Highscore: end check
+  if(state.game==='highscore' && state.round>state.options.rounds){
+    finishHighscore();
+  }
+}
+
+/* ==================== 501/301 ==================== */
+function handle01Turn(p, darts){
+  const turnTotal = darts.reduce((s,d)=>s+d.value,0);
+  const newScore = p.score - turnTotal;
+  const lastDart = darts[darts.length-1];
+  const doubleOut = state.options.doubleOut===1;
+
+  let bust = false;
+  if(newScore < 0) bust = true;
+  else if(newScore === 0){
+    if(doubleOut){
+      // Last scoring dart must be a double (or bull = double bull)
+      const isDouble = lastDart && (lastDart.mult===2 || lastDart.num===50);
+      if(!isDouble) bust = true;
+    }
+  } else if(newScore === 1 && doubleOut){
+    bust = true; // can't finish on double
+  }
+
+  p.turnsPlayed++;
+  p.dartsThrown += darts.length;
+
+  if(bust){
+    // Score reverts; flash bust
+    flashBust(state.currentIdx);
+  } else {
+    p.score = newScore;
+    p.totalScored += turnTotal;
+    if(p.score===0){
+      p.finished = true;
+      state.finished = true;
+      showWinner(p);
+    }
+  }
+}
+
+/* ==================== CRICKET ==================== */
+function handleCricketTurn(p, darts){
+  p.turnsPlayed++;
+  p.dartsThrown += darts.length;
+
+  darts.forEach(d=>{
+    let n = d.num;
+    let m = d.mult;
+    if(d.num===50){ n=25; m=2; }
+    if(d.num===25){ n=25; m=1; }
+    if(!CRICKET_NUMS.includes(n)) return; // miss for cricket
+
+    let hits = m;
+    // Add to marks up to 3
+    const before = p.cricket[n];
+    const toClose = Math.max(0, 3-before);
+    const closingHits = Math.min(hits, toClose);
+    p.cricket[n] = before + closingHits;
+    const overflow = hits - closingHits;
+
+    // Score points if number is closed for this player but not for all
+    if(state.options.cricketMode==='points' && overflow>0){
+      const allClosed = state.players.every(pl=>pl.cricket[n]>=3);
+      if(!allClosed){
+        const pts = (n===25?25:n) * overflow;
+        p.score += pts;
+      }
+    }
+  });
+
+  // Win condition: all 7 closed AND highest (or equal lowest) score
+  const allClosed = CRICKET_NUMS.every(n=>p.cricket[n]>=3);
+  if(allClosed){
+    const lowest = Math.min(...state.players.map(pl=>pl.score));
+    if(p.score >= lowest){
+      // Wait — cricket: must close all AND have >= score of all others
+      const wins = state.players.every(pl=> pl===p || p.score >= pl.score);
+      if(wins){
+        p.finished = true;
+        state.finished = true;
+        showWinner(p);
+      }
+    }
+  }
+}
+
+/* ==================== AROUND THE CLOCK ==================== */
+function handleClockTurn(p, darts){
+  p.turnsPlayed++;
+  p.dartsThrown += darts.length;
+
+  darts.forEach(d=>{
+    if(p.target>20) return;
+    // Bull (25 or 50) doesn't count for numbered targets
+    if(d.num===p.target) p.target++;
+  });
+
+  if(p.target>20){
+    p.finished = true;
+    state.finished = true;
+    showWinner(p);
+  }
+}
+
+/* ==================== HIGH SCORE ==================== */
+function handleHighscoreTurn(p, darts){
+  const total = darts.reduce((s,d)=>s+d.value,0);
+  p.score += total;
+  p.turnsPlayed++;
+  p.dartsThrown += darts.length;
+  p.totalScored += total;
+}
+
+function finishHighscore(){
+  state.finished = true;
+  // Find winner
+  const max = Math.max(...state.players.map(p=>p.score));
+  const winners = state.players.filter(p=>p.score===max);
+  if(winners.length===1){
+    winners[0].finished = true;
+    showWinner(winners[0]);
+  } else {
+    // Tie
+    document.getElementById('modal-title').textContent = '🤝 Égalité';
+    document.getElementById('modal-winner').textContent = winners.map(w=>w.name).join(' & ');
+    document.getElementById('modal-text').textContent = `À ${max} points chacun. Tirage en mort subite recommandé !`;
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+/* ==================== KILLER ==================== */
+function handleKillerTurn(p, darts){
+  p.turnsPlayed++;
+  p.dartsThrown += darts.length;
+
+  // Phase 1: assign killer number with first numbered hit
+  if(!p.killerNum){
+    for(const d of darts){
+      if(d.num>=1 && d.num<=20){
+        // Ensure unique
+        const taken = state.players.map(pl=>pl.killerNum).filter(Boolean);
+        if(!taken.includes(d.num)){
+          p.killerNum = d.num;
+          break;
+        }
+      }
+    }
+    return; // no killer status / damage in this turn
+  }
+
+  // Phase 2: hit double of own number to become killer
+  if(!p.isKiller){
+    for(const d of darts){
+      if(d.num===p.killerNum && d.mult===2){
+        p.isKiller = true;
+        break;
+      }
+    }
+  }
+
+  // Phase 3: as killer, double of someone's number = -1 life
+  if(p.isKiller){
+    darts.forEach(d=>{
+      if(d.mult!==2) return;
+      state.players.forEach(target=>{
+        if(target===p) return;
+        if(target.lives<=0) return;
+        if(target.killerNum===d.num){
+          target.lives--;
+        }
+      });
+    });
+  }
+
+  // Self-damage if double own number after becoming killer? (variant) — skipped
+
+  // Win check: only one player with lives>0
+  const alive = state.players.filter(pl=>pl.lives>0);
+  if(alive.length<=1 && state.players.length>1){
+    state.finished=true;
+    if(alive.length===1){
+      alive[0].finished=true;
+      showWinner(alive[0]);
+    }
+  }
+}
+
+/* ==================== UI HELPERS ==================== */
+function flashBust(idx){
+  setTimeout(()=>{
+    const el = document.querySelector(`.pcard[data-idx="${idx}"]`);
+    if(el){
+      el.classList.add('bust');
+      setTimeout(()=>el.classList.remove('bust'),500);
+    }
+  },50);
+  // Optional: small alert
+}
+
+function showWinner(p){
+  document.getElementById('modal-title').textContent = '🏆 Victoire !';
+  document.getElementById('modal-winner').textContent = p.name;
+  let txt = `Bravo ! Partie remportée en ${p.turnsPlayed} volée${p.turnsPlayed>1?'s':''}.`;
+  if(state.game==='501'||state.game==='301'){
+    const avg = p.turnsPlayed>0?(p.totalScored/p.turnsPlayed).toFixed(1):'—';
+    txt += ` Moyenne par volée : ${avg}.`;
+  }
+  document.getElementById('modal-text').textContent = txt;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function rematch(){
+  closeModal();
+  startGame();
+}
+
+function confirmExit(){
+  if(state.finished || confirm('Quitter la partie en cours ?')){
+    goHome();
+  }
+}
+
+function confirmReset(){
+  if(confirm('Recommencer la partie ?')){
+    startGame();
+  }
+}
+
+// Init
+renderPlayersList();
+</script>
+</body>
+</html>
