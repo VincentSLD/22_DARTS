@@ -248,6 +248,47 @@
     border:2px solid rgba(255,255,255,.2);
     cursor:pointer;flex-shrink:0;
   }
+  /* Rules toggle */
+  .rules-toggle{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(212,168,75,.2);
+    border-radius:12px;
+    padding:12px 16px;
+    color:var(--gold);
+    font-family:'Bebas Neue',sans-serif;
+    font-size:15px;letter-spacing:.15em;
+    cursor:pointer;width:100%;
+    transition:background .15s;
+  }
+  .rules-toggle:active{background:rgba(212,168,75,.1);}
+  .rules-toggle .arrow{
+    margin-left:auto;
+    transition:transform .25s;
+    font-size:14px;
+  }
+  .rules-toggle.open .arrow{transform:rotate(180deg);}
+  .rules-content{
+    max-height:0;overflow:hidden;
+    transition:max-height .35s ease;
+    background:rgba(0,0,0,.2);
+    border-radius:0 0 12px 12px;
+    margin-top:-1px;
+    border:1px solid rgba(212,168,75,.12);
+    border-top:none;
+  }
+  .rules-content.open{max-height:500px;}
+  .rules-inner{
+    padding:14px 16px;
+    font-size:13px;
+    color:var(--cream-dim);
+    line-height:1.6;
+    font-style:italic;
+  }
+  .rules-inner strong{color:var(--cream);font-style:normal;}
+  .rules-inner ul{margin:6px 0 6px 16px;list-style:disc;}
+  .rules-inner li{margin-bottom:3px;}
+
   .start-bar{
     position:absolute;bottom:0;left:0;right:0;
     padding:16px 18px calc(16px + env(safe-area-inset-bottom));
@@ -675,6 +716,15 @@
       <div class="field-label">Joueurs</div>
       <div class="players-list" id="players-list"></div>
     </div>
+
+    <div class="field">
+      <button class="rules-toggle" id="rules-toggle" onclick="toggleRules()">
+        <span>📖</span> Règles du jeu <span class="arrow">▼</span>
+      </button>
+      <div class="rules-content" id="rules-content">
+        <div class="rules-inner" id="rules-inner"></div>
+      </div>
+    </div>
   </div>
   <div class="start-bar">
     <button class="btn-primary" onclick="startGame()">Lancer la partie</button>
@@ -825,6 +875,7 @@ function openSetup(){
   }
 
   renderPlayersList();
+  renderRules();
   show('screen-setup');
 }
 
@@ -1440,6 +1491,86 @@ function confirmReset(){
   if(confirm('Recommencer la partie ?')){
     startGame();
   }
+}
+
+/* ==================== RULES ==================== */
+const GAME_RULES = {
+  '501': `
+    <strong>501 (Double Out)</strong>
+    <ul>
+      <li>Chaque joueur commence à <strong>501 points</strong>.</li>
+      <li>À chaque volée (3 fléchettes max), le total est soustrait du score.</li>
+      <li>Il faut atteindre <strong>exactement 0</strong> pour gagner.</li>
+      <li>En mode <strong>Double Out</strong>, la dernière fléchette doit toucher un double (ou le bull central).</li>
+      <li>Si le score descend en dessous de 0 (ou à 1 en Double Out), c'est un <strong>bust</strong> : le score revient à sa valeur de début de tour.</li>
+    </ul>
+  `,
+  '301': `
+    <strong>301 (Double Out)</strong>
+    <ul>
+      <li>Identique au 501, mais chaque joueur commence à <strong>301 points</strong>.</li>
+      <li>Partie plus rapide, idéale pour des confrontations courtes.</li>
+      <li>En mode <strong>Double Out</strong>, la dernière fléchette doit toucher un double (ou le bull central).</li>
+      <li>Si le score descend en dessous de 0 (ou à 1 en Double Out), c'est un <strong>bust</strong>.</li>
+    </ul>
+  `,
+  'cricket': `
+    <strong>Cricket</strong>
+    <ul>
+      <li>Les cibles sont : <strong>20, 19, 18, 17, 16, 15</strong> et le <strong>Bull</strong>.</li>
+      <li>Il faut toucher <strong>3 fois</strong> chaque cible pour la fermer (/ → X → ⊗).</li>
+      <li><strong>Avec points :</strong> une fois une cible fermée, chaque touche supplémentaire rapporte des points, tant que l'adversaire ne l'a pas fermée aussi.</li>
+      <li><strong>Sans points :</strong> il suffit de fermer les 7 cibles en premier.</li>
+      <li>Le gagnant est le premier à fermer toutes les cibles avec un score supérieur ou égal à celui des adversaires.</li>
+    </ul>
+  `,
+  'clock': `
+    <strong>Around the Clock</strong>
+    <ul>
+      <li>Chaque joueur doit toucher les numéros de <strong>1 à 20</strong>, dans l'ordre.</li>
+      <li>Seuls les simples, doubles et triples du numéro en cours comptent.</li>
+      <li>3 fléchettes par tour : si vous touchez votre cible, vous passez au numéro suivant.</li>
+      <li>Le premier à toucher le <strong>20</strong> remporte la partie.</li>
+    </ul>
+  `,
+  'highscore': `
+    <strong>High Score</strong>
+    <ul>
+      <li>Chaque joueur lance 3 fléchettes par tour pendant un nombre de manches défini.</li>
+      <li>Tous les points comptent : simples, doubles et triples.</li>
+      <li>Le joueur avec le <strong>score total le plus élevé</strong> à la fin des manches gagne.</li>
+      <li>En cas d'égalité, une mort subite est recommandée.</li>
+    </ul>
+  `,
+  'killer': `
+    <strong>Killer</strong>
+    <ul>
+      <li><strong>Phase 1 :</strong> chaque joueur lance pour déterminer son numéro (1–20).</li>
+      <li><strong>Phase 2 :</strong> toucher le <strong>double</strong> de son propre numéro pour devenir <strong>Killer</strong> 🗡️.</li>
+      <li><strong>Phase 3 :</strong> en tant que Killer, toucher le <strong>double du numéro d'un adversaire</strong> lui retire une vie.</li>
+      <li>Chaque joueur commence avec <strong>3 vies</strong>.</li>
+      <li>Le dernier joueur en vie remporte la partie.</li>
+    </ul>
+  `
+};
+
+function toggleRules(){
+  const toggle = document.getElementById('rules-toggle');
+  const content = document.getElementById('rules-content');
+  toggle.classList.toggle('open');
+  content.classList.toggle('open');
+}
+
+function renderRules(){
+  const inner = document.getElementById('rules-inner');
+  if(inner && state.game){
+    inner.innerHTML = GAME_RULES[state.game] || '';
+  }
+  // Close rules when switching game
+  const toggle = document.getElementById('rules-toggle');
+  const content = document.getElementById('rules-content');
+  if(toggle) toggle.classList.remove('open');
+  if(content) content.classList.remove('open');
 }
 
 // Init
