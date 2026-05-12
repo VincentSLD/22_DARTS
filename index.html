@@ -88,7 +88,7 @@
   /* ===== HEADER ===== */
   .topbar{
     display:flex;align-items:center;justify-content:space-between;
-    padding:14px 18px 10px;
+    padding:10px 18px 8px;
     border-bottom:1px solid rgba(212,168,75,.15);
     background:linear-gradient(180deg,rgba(0,0,0,.3),transparent);
   }
@@ -107,7 +107,7 @@
     background:rgba(255,255,255,.05);
     border:1px solid rgba(212,168,75,.2);
     color:var(--cream);
-    width:42px;height:42px;border-radius:12px;
+    width:36px;height:36px;border-radius:10px;
     display:flex;align-items:center;justify-content:center;
     font-size:20px;cursor:pointer;
     transition:transform .15s, background .15s;
@@ -281,7 +281,7 @@
   .game-screen.active{display:flex;}
   .game-top{
     display:flex;align-items:center;justify-content:space-between;
-    padding:10px 14px;
+    padding:6px 14px;
     background:linear-gradient(180deg,rgba(0,0,0,.4),transparent);
     border-bottom:1px solid rgba(212,168,75,.15);
   }
@@ -290,13 +290,13 @@
     font-size:18px;letter-spacing:.18em;color:var(--gold);
   }
   .players-bar{
-    display:grid;gap:6px;padding:10px 12px;
+    display:grid;gap:4px;padding:6px 12px;
   }
   .pcard{
     background:linear-gradient(160deg,var(--felt-2),var(--felt));
     border:1px solid rgba(212,168,75,.15);
     border-radius:14px;
-    padding:6px 14px;
+    padding:5px 12px;
     display:flex;align-items:center;justify-content:space-between;
     position:relative;
     overflow:hidden;
@@ -330,7 +330,7 @@
   }
   .pscore{
     font-family:'DM Mono',monospace;
-    font-size:28px;font-weight:500;
+    font-size:24px;font-weight:500;
     color:var(--cream);
     letter-spacing:-.02em;
   }
@@ -343,20 +343,20 @@
 
   /* Cricket targets */
   .cricket-targets{
-    display:flex;gap:5px;margin-top:8px;
+    display:flex;gap:4px;margin-top:5px;
   }
   .ctarget{
     flex:1;text-align:center;
     font-family:'DM Mono',monospace;
     font-size:12px;
     background:rgba(0,0,0,.25);
-    border-radius:7px;padding:8px 2px;
+    border-radius:7px;padding:5px 2px;
     color:var(--cream-dim);
     border:1px solid transparent;
     min-width:0;
   }
-  .ctarget .label{font-size:18px;font-weight:600;opacity:.85;display:block;margin-bottom:2px;}
-  .ctarget .marks{font-size:34px;color:var(--cream);line-height:1.1;}
+  .ctarget .label{font-size:16px;font-weight:600;opacity:.85;display:block;margin-bottom:1px;}
+  .ctarget .marks{font-size:30px;color:var(--cream);line-height:1;}
   .ctarget.closed{background:rgba(212,168,75,.15);border-color:var(--gold);}
   .ctarget.closed .marks{color:var(--gold);}
   .ctarget.ctarget-pending .marks{color:rgba(244,234,213,.3);}
@@ -376,8 +376,8 @@
   .input-area{
     background:linear-gradient(180deg,var(--felt-2),#0a1812);
     border-top:2px solid rgba(212,168,75,.2);
-    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-    display:flex;flex-direction:column;gap:8px;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:6px;
   }
   .turn-display{
     display:flex;align-items:center;justify-content:space-between;
@@ -472,10 +472,10 @@
 
   /* ===== CRICKET DIRECT INPUT ===== */
   .cricket-keypad{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
   }
   .cricket-key{
-    padding:10px 6px;
+    padding:8px 6px;
     background:linear-gradient(180deg,#1c3a2c,#142b20);
     border:1px solid rgba(212,168,75,.15);
     color:var(--cream);
