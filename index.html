@@ -465,6 +465,47 @@
     font-size:18px;
   }
 
+  /* ===== CRICKET DIRECT INPUT ===== */
+  .cricket-keypad{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  }
+  .cricket-key{
+    padding:16px 6px;
+    background:linear-gradient(180deg,#1c3a2c,#142b20);
+    border:1px solid rgba(212,168,75,.15);
+    color:var(--cream);
+    border-radius:12px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    transition:transform .08s,background .15s;
+    box-shadow:var(--inset);
+  }
+  .cricket-key:active{transform:scale(.93);background:linear-gradient(180deg,#2a4d3a,#1c3a2c);}
+  .ck-num{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.05em;}
+  .ck-marks{font-size:20px;color:var(--cream-dim);font-family:'DM Mono',monospace;line-height:1;}
+  .cricket-key.ck-closed{
+    background:linear-gradient(180deg,rgba(212,168,75,.2),rgba(212,168,75,.1));
+    border-color:var(--gold);
+  }
+  .cricket-key.ck-closed .ck-marks{color:var(--gold);}
+  .cricket-key.ck-pending{
+    background:linear-gradient(180deg,#2a4d3a,#1c3a2c);
+    border-color:rgba(212,168,75,.4);
+  }
+  .cricket-key.ck-miss{
+    background:linear-gradient(180deg,#2a2a2a,#1a1a1a);
+    color:var(--cream-dim);letter-spacing:.1em;
+  }
+  .cricket-key.ck-undo{
+    background:rgba(0,0,0,.4);
+    border:1px solid rgba(212,168,75,.25);
+    color:var(--gold);font-size:18px;
+  }
+  .cricket-key.ck-validate{
+    background:linear-gradient(180deg,var(--red),var(--red-deep));
+    color:var(--cream);letter-spacing:.15em;
+    font-family:'Bebas Neue',sans-serif;font-size:15px;
+  }
+
   /* ===== MODAL ===== */
   .overlay{
     position:fixed;inset:0;
@@ -698,6 +739,8 @@
         <button class="key undo" onclick="undoLast()">↶</button>
         <button class="key action" onclick="endTurn()">VALIDER</button>
       </div>
+
+      <div class="cricket-keypad" id="cricket-keypad" style="display:none;"></div>
     </div>
   </div>
 </section>
@@ -933,6 +976,7 @@ function renderGame(){
   });
 
   renderTurn();
+  setupCricketInput();
 }
 
 function renderTurn(){
@@ -946,12 +990,91 @@ function renderTurn(){
       slot.className='dart-slot empty';
     }
   });
-  const total = state.currentDarts.reduce((s,d)=>s+d.value,0);
-  document.getElementById('turn-total').innerHTML = `<small>VOLÉE</small>${total}`;
+
+  if(state.game==='cricket'){
+    document.getElementById('turn-total').innerHTML = `<small>FLÉCHETTES</small>${state.currentDarts.length}/3`;
+  } else {
+    const total = state.currentDarts.reduce((s,d)=>s+d.value,0);
+    document.getElementById('turn-total').innerHTML = `<small>VOLÉE</small>${total}`;
+  }
 
   document.querySelectorAll('.mult-btn').forEach(b=>{
     b.classList.toggle('on', parseInt(b.dataset.mult)===state.preMult);
   });
+
+  if(state.game==='cricket') renderCricketKeypad();
+}
+
+/* ==================== CRICKET DIRECT INPUT ==================== */
+function setupCricketInput(){
+  const isCricket = state.game==='cricket';
+  document.querySelector('.multiplier-row').style.display = isCricket?'none':'';
+  document.querySelector('.keypad').style.display = isCricket?'none':'';
+  document.getElementById('cricket-keypad').style.display = isCricket?'':'none';
+  if(isCricket) renderCricketKeypad();
+}
+
+function renderCricketKeypad(){
+  const pad = document.getElementById('cricket-keypad');
+  const p = state.players[state.currentIdx];
+  if(!p) return;
+  pad.innerHTML='';
+
+  CRICKET_NUMS.forEach(n=>{
+    const btn = document.createElement('button');
+    btn.className='cricket-key';
+
+    const saved = p.cricket[n];
+    const pending = state.currentDarts.filter(d=>{
+      let dn=d.num; if(dn===50) dn=25; return dn===n;
+    }).length;
+    const total = saved+pending;
+    if(total>=3) btn.classList.add('ck-closed');
+    else if(pending>0) btn.classList.add('ck-pending');
+
+    const mark = total===0?'·':total===1?'/':total===2?'✕':'⊗';
+    const label = n===25?'BULL':n;
+    btn.innerHTML=`<span class="ck-num">${label}</span><span class="ck-marks">${mark}</span>`;
+    btn.addEventListener('click',()=>cricketKeyClick(n));
+    pad.appendChild(btn);
+  });
+
+  // Miss
+  const miss = document.createElement('button');
+  miss.className='cricket-key ck-miss';
+  miss.innerHTML='<span class="ck-num">RATÉ</span>';
+  miss.addEventListener('click',()=>cricketKeyClick(0));
+  pad.appendChild(miss);
+
+  // Undo
+  const undo = document.createElement('button');
+  undo.className='cricket-key ck-undo';
+  undo.style.gridColumn='span 2';
+  undo.textContent='↶ ANNULER';
+  undo.addEventListener('click',undoLast);
+  pad.appendChild(undo);
+
+  // Validate
+  const validate = document.createElement('button');
+  validate.className='cricket-key ck-validate';
+  validate.style.gridColumn='span 2';
+  validate.textContent='VALIDER';
+  validate.addEventListener('click',endTurn);
+  pad.appendChild(validate);
+}
+
+function cricketKeyClick(n){
+  if(state.finished) return;
+  if(state.currentDarts.length>=3) return;
+  if(n===0){
+    state.currentDarts.push({num:0,mult:1,value:0,label:'—'});
+  } else {
+    const label = n===25?'B':String(n);
+    state.currentDarts.push({num:n,mult:1,value:n,label:label});
+  }
+  state.preMult=1;
+  renderTurn();
+  if(navigator.vibrate) navigator.vibrate(15);
 }
 
 /* ==================== INPUT ==================== */
