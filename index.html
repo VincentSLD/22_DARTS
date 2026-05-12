@@ -1008,6 +1008,7 @@ function renderTurn(){
 /* ==================== CRICKET DIRECT INPUT ==================== */
 function setupCricketInput(){
   const isCricket = state.game==='cricket';
+  document.querySelector('.turn-display').style.display = isCricket?'none':'';
   document.querySelector('.multiplier-row').style.display = isCricket?'none':'';
   document.querySelector('.keypad').style.display = isCricket?'none':'';
   document.getElementById('cricket-keypad').style.display = isCricket?'':'none';
@@ -1065,7 +1066,6 @@ function renderCricketKeypad(){
 
 function cricketKeyClick(n){
   if(state.finished) return;
-  if(state.currentDarts.length>=3) return;
   if(n===0){
     state.currentDarts.push({num:0,mult:1,value:0,label:'—'});
   } else {
