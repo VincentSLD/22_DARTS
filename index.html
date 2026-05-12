@@ -359,6 +359,10 @@
   .ctarget .marks{font-size:34px;color:var(--cream);line-height:1.1;}
   .ctarget.closed{background:rgba(212,168,75,.15);border-color:var(--gold);}
   .ctarget.closed .marks{color:var(--gold);}
+  .ctarget.ctarget-pending .marks{color:rgba(244,234,213,.3);}
+  .ctarget.ctarget-pending.closed .marks{color:rgba(212,168,75,.35);}
+  .ctarget.ctarget-pending.closed{background:rgba(212,168,75,.08);border-color:rgba(212,168,75,.25);}
+  .pending-pts{color:rgba(244,234,213,.3);font-size:18px;}
 
   /* Around the clock */
   .clock-target{
@@ -925,14 +929,38 @@ function renderGame(){
     card.className = 'pcard'+(i===state.currentIdx && !state.finished?' active':'');
     card.dataset.idx = i;
 
+    // Cricket: calculate pending marks & points for current player
+    let cricketTemp=null, cricketPendingPts=0;
+    if(state.game==='cricket'){
+      cricketTemp={};
+      CRICKET_NUMS.forEach(n=>cricketTemp[n]=p.cricket[n]);
+      if(i===state.currentIdx && state.currentDarts.length>0){
+        state.currentDarts.forEach(d=>{
+          let n=d.num; if(n===50) n=25;
+          if(!CRICKET_NUMS.includes(n)) return;
+          const before=cricketTemp[n];
+          const toClose=Math.max(0,3-before);
+          const closingHits=Math.min(1,toClose);
+          cricketTemp[n]=before+closingHits;
+          const overflow=1-closingHits;
+          if(state.options.cricketMode==='points'&&overflow>0){
+            const allClosed=state.players.every(pl=>((pl===p)?cricketTemp[n]:pl.cricket[n])>=3);
+            if(!allClosed) cricketPendingPts+=(n===25?25:n);
+          }
+        });
+      }
+    }
+
     let extra='';
     if(state.game==='cricket'){
       const tgs = CRICKET_NUMS.map(n=>{
-        const m = p.cricket[n];
-        const closed = m>=3;
-        const marks = m===0?'·':m===1?'/':m===2?'X':'⊗';
-        const label = n===25?'B':n;
-        return `<div class="ctarget ${closed?'closed':''}"><span class="label">${label}</span><span class="marks">${marks}</span></div>`;
+        const saved=p.cricket[n];
+        const total=cricketTemp[n];
+        const hasPending=(i===state.currentIdx)&&total>saved;
+        const closed=total>=3;
+        const marks=total===0?'·':total===1?'/':total===2?'X':'⊗';
+        const label=n===25?'B':n;
+        return `<div class="ctarget ${closed?'closed':''} ${hasPending?'ctarget-pending':''}"><span class="label">${label}</span><span class="marks">${marks}</span></div>`;
       }).join('');
       extra = `<div class="cricket-targets">${tgs}</div>`;
     } else if(state.game==='clock'){
@@ -946,8 +974,11 @@ function renderGame(){
     let scoreDisplay = p.score;
     let scoreLabel = '';
     if(state.game==='cricket'){
-      scoreDisplay = p.score;
-      scoreLabel = `<div class="pmeta">${CRICKET_NUMS.filter(n=>p.cricket[n]>=3).length}/7</div>`;
+      const closedCount=CRICKET_NUMS.filter(n=>cricketTemp[n]>=3).length;
+      if(i===state.currentIdx&&cricketPendingPts>0){
+        scoreDisplay = `${p.score} <span class="pending-pts">+${cricketPendingPts}</span>`;
+      }
+      scoreLabel = `<div class="pmeta">${closedCount}/7</div>`;
     } else if(state.game==='clock'){
       scoreDisplay = (p.target>20?'✓':p.target-1)+'/20';
     } else if(state.game==='highscore'){
@@ -1074,7 +1105,7 @@ function cricketKeyClick(n){
     state.currentDarts.push({num:n,mult:1,value:n,label:label});
   }
   state.preMult=1;
-  renderTurn();
+  renderGame();
   if(navigator.vibrate) navigator.vibrate(15);
 }
 
@@ -1115,7 +1146,8 @@ function undoLast(){
   if(state.currentDarts.length>0){
     state.currentDarts.pop();
     state.preMult = 1;
-    renderTurn();
+    if(state.game==='cricket') renderGame();
+    else renderTurn();
   } else if(state.turnSnapshots.length>0){
     // Restore previous turn
     const snap = state.turnSnapshots.pop();
