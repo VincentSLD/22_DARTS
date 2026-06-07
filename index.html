@@ -545,6 +545,14 @@
     background:linear-gradient(180deg,#2a2a2a,#1a1a1a);
     color:var(--cream-dim);letter-spacing:.1em;
   }
+  .ck-miss-flash{
+    animation:ckMissFlash .35s ease;
+  }
+  @keyframes ckMissFlash{
+    0%{transform:scale(1);background:linear-gradient(180deg,#2a2a2a,#1a1a1a);}
+    30%{transform:scale(.88);background:linear-gradient(180deg,#5a2020,#3a1515);color:var(--cream);}
+    100%{transform:scale(1);background:linear-gradient(180deg,#2a2a2a,#1a1a1a);}
+  }
   .cricket-key.ck-undo{
     background:rgba(0,0,0,.4);
     border:1px solid rgba(212,168,75,.25);
@@ -1148,14 +1156,22 @@ function renderCricketKeypad(){
 function cricketKeyClick(n){
   if(state.finished) return;
   if(n===0){
+    // Flash animation on miss button before re-render
+    const missBtn = document.querySelector('.cricket-key.ck-miss');
+    if(missBtn){
+      missBtn.classList.add('ck-miss-flash');
+    }
     state.currentDarts.push({num:0,mult:1,value:0,label:'—'});
+    state.preMult=1;
+    if(navigator.vibrate) navigator.vibrate([30,30,30]);
+    setTimeout(()=>renderGame(),300);
   } else {
     const label = n===25?'B':String(n);
     state.currentDarts.push({num:n,mult:1,value:n,label:label});
+    state.preMult=1;
+    renderGame();
+    if(navigator.vibrate) navigator.vibrate(15);
   }
-  state.preMult=1;
-  renderGame();
-  if(navigator.vibrate) navigator.vibrate(15);
 }
 
 /* ==================== INPUT ==================== */
